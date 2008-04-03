@@ -7,32 +7,30 @@ object NumberSetGenerators
 {
 	// Generators
 	// Numbers
-	implicit def makeArbN0(x: Arb[N0]): Arbitrary[N0] = 
-	new Arbitrary[N0] {
-		def getArbitrary = for(
-			a <- Arbitrary.arbitrary[Int]
-		) yield N0(Math.abs(a))
-	}
+	implicit def makeArbN0: Arbitrary[N0] = Arbitrary(
+		arbitrary[Int].map( n =>
+			N0(Math.abs(n))
+		)
+	)
 	
-	implicit def makeArbNstar(x: Arb[Nstar]): Arbitrary[Nstar] = 
-	new Arbitrary[Nstar] {
-		def getArbitrary = for(
-			a <- Arbitrary.arbitrary[Int]
-		) yield Nstar(Math.abs(a) + 1)
-	}
-	implicit def makeArbQstar(x: Arb[Qstar]): Arbitrary[Qstar] = 
-	new Arbitrary[Qstar] {
-		def getArbitrary = for(
-			a <- Arbitrary.arbitrary[Double] if a != 0.0
-		) yield Qstar(a)
-	}
+	implicit def makeArbNstar: Arbitrary[Nstar] = Arbitrary(
+		arbitrary[Int].map( n =>
+			Nstar(Math.abs(n) + 1)
+		)
+	)
+
+	implicit def makeArbQstar: Arbitrary[Qstar] = Arbitrary(
+		arbitrary[Double].filter( x => x != 0.0 ).map( x =>
+			Qstar(x)
+		)
+	)
 }
 
 trait SemiGroupProperties[T]
 extends Properties
 {
-	implicit def arbSG(x: Arb[SemiGroup[T]]): Arbitrary[SemiGroup[T]]
-	implicit def arbT(x: Arb[T]): Arbitrary[T]
+	implicit def arbSG: Arbitrary[SemiGroup[T]]
+	implicit def arbT: Arbitrary[T]
 	// Properties
 	// Semigroups
 	// Assert that for all a, b, c: 
@@ -48,8 +46,8 @@ trait CommutativeMagmaProperties[T]
 extends Properties
 {
 	import Arbitrary._
-	implicit val arbCM: Arb[CommutativeMagma[T]] => Arbitrary[CommutativeMagma[T]]
-	implicit def arbT(x: Arb[T]): Arbitrary[T]
+	implicit def arbCM: Arbitrary[CommutativeMagma[T]]
+	implicit def arbT: Arbitrary[T]
 	// Commutativity
 	// Assert that for all a, b: 
 	// op(a,b) = op(b,a)
@@ -64,8 +62,8 @@ trait QuasiGroupProperties[T]
 extends Properties
 {
 	import Arbitrary._
-	implicit val arbQG: Arb[QuasiGroup[T]] => Arbitrary[QuasiGroup[T]]
-	implicit def arbT(x: Arb[T]): Arbitrary[T]
+	implicit def arbQG: Arbitrary[QuasiGroup[T]]
+	implicit def arbT: Arbitrary[T]
 	// QuasiGroups
 	// Assert that for all a,b
 	// a * leftDivide(a,b) = b
@@ -85,8 +83,8 @@ extends Properties
 trait IdentityMagmaProperties[T]
 extends Properties
 {
-	implicit val arbIM: Arb[IdentityMagma[T]] => Arbitrary[IdentityMagma[T]]
-	implicit def arbT(x: Arb[T]): Arbitrary[T]
+	implicit def arbIM: Arbitrary[IdentityMagma[T]]
+	implicit def arbT: Arbitrary[T]
 	// Identity	Magma
 	// Assert that for all a, op(identity,a) = a
 	// and op(a, identity) = a
@@ -105,7 +103,7 @@ extends Properties
 trait LoopProperties[T]
 extends IdentityMagmaProperties[T] with QuasiGroupProperties[T]
 {
-	implicit val arbL: Arb[Loop[T]] => Arbitrary[Loop[T]]
+	implicit val arbL: Arbitrary[Loop[T]]
 	// Loop
 	// Assert that for all a,
 	//  leftInverse(a) * a = identity
@@ -124,7 +122,7 @@ extends IdentityMagmaProperties[T] with QuasiGroupProperties[T]
 trait CommutativeQuasiGroupProperties[T]
 extends CommutativeMagmaProperties[T] with QuasiGroupProperties[T]
 {
-	implicit val arbCQG: Arb[CommutativeQuasiGroup[T]] => Arbitrary[CommutativeQuasiGroup[T]]
+	implicit val arbCQG: Arbitrary[CommutativeQuasiGroup[T]]
 	// CommutativeQuasiGroup
 	// Assert that for all a,b
 	// a * divide(a,b) = b
@@ -145,8 +143,8 @@ extends CommutativeMagmaProperties[T] with QuasiGroupProperties[T]
 class GenericGenerator[T,G[_]](g: G[T])
 {
 	implicit val generator = Gen.value(g)
-	implicit def makeArbitraryG(z: Arb[G[T]])
-		(implicit a: Arb[T] => Arbitrary[T]): Arbitrary[G[T]] =
+	implicit def makeArbitraryG(z: Arbitrary[G[T]])
+		(implicit a: Arbitrary[T]): Arbitrary[G[T]] =
 		new Arbitrary[G[T]] {
 			def getArbitrary = generator
 		}
@@ -158,11 +156,9 @@ object MagmaTest extends Application
 
 	object bar extends SemiGroupProperties[Int]
 	{
-		val gen = new GenericGenerator[Int, SemiGroup](
-			IntsUnderAdditionIsAbelianGroup
+		def arbSG = Arbitrary(
+			Gen.elements(IntsUnderAdditionIsAbelianGroup)
 		)
-		def arbSG(x: Arb[SemiGroup[Int]]): Arbitrary[SemiGroup[Int]] = gen.makeArbitraryG(x)
-		def arbT(x: Arb[Int]) = Arbitrary.arbitraryInt(x)
 	}
 	bar.checkProperties
 }

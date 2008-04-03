@@ -2,3 +2,7 @@
 /build
 /docs
 
+/.project
+/.classpath
+/.manager
+/.settings

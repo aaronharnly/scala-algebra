@@ -1,5 +1,5 @@
 package net.harnly.aaron.math.algebra
-import java.lang.Double.MIN_VALUE
+import java.lang.{Double}
 
 // ----------------- Basic Sets ---------------------
 // Wrapper classes that have some limited range
@@ -26,7 +26,7 @@ extends RangedWrapper[Int](value, {a: Int => a > 0})
 // Q*, rational numbers excluding zero
 case class Qstar(value: Double)
 extends RangedWrapper[Double](value, 
-	{x: Double => (Math.abs(x - MIN_VALUE) <= MIN_VALUE)}
+	{x: Double => (Math.abs(x - Double.MIN_VALUE) <= Double.MIN_VALUE)}
 )
 
 // ----------------- Algebraic Structures ---------------------
